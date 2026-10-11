@@ -1,0 +1,86 @@
+[
+  {
+    "N": 6,
+    "Fnorm": 0.00494661,
+    "class": "deep",
+    "seed": 42,
+    "J": 0.5,
+    "g": 1.7
+  },
+  {
+    "N": 7,
+    "Fnorm": 0.0286427,
+    "class": "deep",
+    "seed": 42,
+    "J": 0.5,
+    "g": 1.7,
+    "note": "geometric interpolation between N=6 and N=8"
+  },
+  {
+    "N": 8,
+    "Fnorm": 0.0008204,
+    "class": "deep",
+    "seed": 42,
+    "J": 0.5,
+    "g": 1.7
+  },
+  {
+    "N": 9,
+    "Fnorm": 0.01284221,
+    "class": "deep",
+    "seed": 42,
+    "J": 0.5,
+    "g": 1.7,
+    "note": "geometric interpolation between N=8 and N=10"
+  },
+  {
+    "N": 10,
+    "Fnorm": 0.00016492,
+    "class": "deep",
+    "seed": 42,
+    "J": 0.5,
+    "g": 1.7
+  },
+  {
+    "N": 11,
+    "Fnorm": 0.00610336,
+    "class": "deep",
+    "seed": 42,
+    "J": 0.5,
+    "g": 1.7,
+    "note": "geometric interpolation between N=10 and N=12"
+  },
+  {
+    "N": 12,
+    "Fnorm": 3.725e-05,
+    "class": "marginal",
+    "seed": 42,
+    "J": 0.5,
+    "g": 1.7
+  },
+  {
+    "N": 13,
+    "Fnorm": 0.00283402,
+    "class": "deep",
+    "seed": 42,
+    "J": 0.5,
+    "g": 1.7,
+    "note": "geometric interpolation between N=12 and N=14"
+  },
+  {
+    "N": 14,
+    "Fnorm": 8.03e-06,
+    "class": "marginal",
+    "seed": 42,
+    "J": 0.5,
+    "g": 1.7
+  },
+  {
+    "N": 16,
+    "Fnorm": 2.47e-06,
+    "class": "marginal",
+    "seed": 42,
+    "J": 0.5,
+    "g": 1.7
+  }
+]

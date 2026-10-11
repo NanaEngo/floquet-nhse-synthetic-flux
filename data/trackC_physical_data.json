@@ -1,0 +1,91 @@
+{
+  "sc_regimes": {
+    "rwa": {
+      "relative_sensitivity": 1.0,
+      "stability": "Stable",
+      "petermann_K": 1000000.0
+    },
+    "topo": {
+      "relative_sensitivity": 10.0,
+      "stability": "Topologically Protected",
+      "petermann_K": 1000000.0
+    },
+    "usc": {
+      "relative_sensitivity": 100.0,
+      "stability": "Critical",
+      "petermann_K": 1.0403901506188018
+    },
+    "dsc": {
+      "relative_sensitivity": 1000.0,
+      "stability": "Unstable but Bounded",
+      "petermann_K": 1.0397424481048232
+    }
+  },
+  "otoc_convergence": {
+    "n_values": [
+      6,
+      8,
+      10,
+      12
+    ],
+    "dt_values": [
+      0.05,
+      0.05,
+      0.05,
+      0.05
+    ],
+    "lambda_raw_list": [
+      10.298381184838155,
+      15.306444396802446,
+      20.066843911109736,
+      18.04123919883056
+    ],
+    "lambda_otoc_list": [
+      0.00891634734617849,
+      0.013252332811084368,
+      0.017373890832129642,
+      0.015620120518468018
+    ],
+    "r2_list": [
+      0.9575126296630453,
+      0.9685197496567303,
+      0.9736900108103816,
+      0.981790292090184
+    ],
+    "mss_bound": 1155.0,
+    "note": "lambda_otoc_list stores lambda_raw / lambda_mss (fractional); lambda_raw_list stores raw OTOC Lyapunov exponent in kappa^-1 units; MSS bound computed from config T_c = 15 mK and platform kappa/2pi = 1.7 MHz.",
+    "mss_bound_note": "Corrected platform value at T_c=15 mK, kappa/2pi=1.7 MHz (legacy 1963.81 flagged)"
+  },
+  "lyapunov_convergence": {
+    "n_steps_list": [
+      1000,
+      2500,
+      5000,
+      10000
+    ],
+    "lambda_max_list": [
+      -0.004896595539741033,
+      -0.004955782921323294,
+      -0.004979439666590926,
+      -0.0049838314894001135
+    ],
+    "variance_list": [
+      0.00025372772131052697,
+      0.00010118927702241431,
+      5.054422317261395e-05,
+      2.525949778158378e-05
+    ],
+    "convergence_threshold": 0.01
+  },
+  "divergence_audit": {
+    "qfi": 0.0,
+    "petermann_k": 1.0403901506188018,
+    "lyapunov_exponent": 32.244956701629576,
+    "cross_validation": {
+      "max_discrepancy_pct": 0.0,
+      "warnings": [
+        "Cross-solver validation not implemented for NHSE regime; estimate assumes <5%"
+      ]
+    }
+  }
+}
