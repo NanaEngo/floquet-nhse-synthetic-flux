@@ -159,13 +159,12 @@ def main():
             key = random.PRNGKey(BASE_SEED + 1000 * N + k)
             bx, _bf = adam_run(grad_fn, loss_fn, key)
             _, _, F_norm, max_re, gf, gr, iso = [float(v) for v in fisher_fn(bx)]
-            # NOTE convention split (frozen with the published analysis):
-            # per-seed gains stay in the T-matrix diagnostic convention
-            # because the published ensemble medians (marginal Gfwd
-            # +11.5 dB, IQR 7.7-19.7) and the tradeoff cloud were computed
-            # from it. Only the six optima rows use the reported S-matrix
-            # convention (see published_gains/self_check). Do not mix
-            # without updating the manuscript medians.
+            # NOTE convention record (Option A unification, 2026-10-12):
+            # per-seed gains stay in the T-matrix diagnostic convention as
+            # the raw ensemble record; the reported ensemble medians are
+            # computed in the S-matrix convention by
+            # build_tradeoff_points.py into data/tradeoff_points.json.
+            # Do not mix without updating the manuscript medians.
             p = unmap(bx)
             seeds.append({
                 "seed_index": k,
