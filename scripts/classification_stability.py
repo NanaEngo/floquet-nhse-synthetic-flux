@@ -9,8 +9,9 @@ classify every converged solution (F_C^norm >= 0.5 -> deep_stability, else
 marginal_stability; unstable if the final spectral margin fails), and build
 the confusion matrix against the published classes.
 
-Model conventions are byte-identical to scripts/doc_nscaling_hpc.py (kappa=1,
-theta0=0.1, d-theta probe, record Fisher information normalized by ||mu||^2).
+Model conventions live in scripts/doc_core.py (kappa=1, theta0=0.1,
+d-theta probe, record Fisher information normalized by ||mu||^2) and are
+imported here, so producers and gates share one implementation.
 Before optimizing, the script re-evaluates the published optima through the
 model as a self-check and aborts on mismatch.
 
@@ -25,12 +26,21 @@ os.environ["JAX_ENABLE_X64"] = "1"
 import json
 import sys
 import time
-import math
 import argparse
 
 import jax
 import jax.numpy as jnp
 from jax import random
+
+from doc_core import (
+    N_OPTIM,
+    LR,
+    unmap,
+    map_back,
+    compute_all,
+    loss,
+    published_gains,
+)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(HERE, "..", "data")
@@ -38,132 +48,11 @@ REF_JSON = os.path.join(DATA_DIR, "n_scaling_results_v3.json")
 ENRICHED_JSON = os.path.join(DATA_DIR, "n_scaling_results_v3_enriched.json")
 OUT_JSON = os.path.join(DATA_DIR, "classification_stability.json")
 
-KAPPA = 1.0
-THETA0 = 0.1
-DTHETA = 1e-4
 Ns = [6, 8, 10, 12, 14, 16]
 SEEDS_PER_N = 10
-N_OPTIM = 500          # ponytail: production protocol kept identical on purpose
-LR = 0.003
+# N_OPTIM/LR: production protocol, single source in doc_core (imported above).
 DEEP_THRESHOLD = 0.5
 BASE_SEED = 20260823   # audit run; distinct from production seed 42
-
-# Bounds must match doc_nscaling_hpc.py exactly (self-check inverts unmap).
-J_LO, J_HI = 0.05, 0.5
-g_LO, g_HI = 0.5, 3.0
-L_LO, L_HI = 0.005, 0.1
-PHI_LO, PHI_HI = 0.0, 6.2832
-
-
-def unmap(x):
-    """Map unconstrained optimizer variables to physical parameters."""
-    def sig(z):
-        """Logistic sigmoid mapping a real scalar to (0, 1).
-
-        Args:
-            z: Real scalar, dimensionless.
-
-        Returns:
-            Sigmoid value in (0, 1), dimensionless.
-        """
-        return 1.0 / (1.0 + jnp.exp(-z))
-    return jnp.array([
-        J_LO + (J_HI - J_LO) * sig(x[0]),
-        g_LO + (g_HI - g_LO) * sig(x[1]),
-        L_LO + (L_HI - L_LO) * sig(x[2]),
-        PHI_LO + (PHI_HI - PHI_LO) * sig(x[3]),
-    ])
-
-
-def map_back(p):
-    """Invert unmap: physical parameters -> unconstrained variables."""
-    def logit(lo, hi, v):
-        """Map a bounded physical value back to an unconstrained variable.
-
-        Args:
-            lo: Lower box bound (same unit as v).
-            hi: Upper box bound (same unit as v).
-            v: Physical value inside (lo, hi).
-
-        Returns:
-            Unconstrained logit value, dimensionless.
-        """
-        u = min(max((v - lo) / (hi - lo), 1e-9), 1.0 - 1e-9)
-        return math.log(u / (1.0 - u))
-    return [
-        logit(J_LO, J_HI, p[0]),
-        logit(g_LO, g_HI, p[1]),
-        logit(L_LO, L_HI, p[2]),
-        logit(PHI_LO, PHI_HI, p[3]),
-    ]
-
-
-def make_drift(n, J, g, lam, phi, theta):
-    """Build the 2n x 2n non-Hermitian double-chain drift matrix."""
-    A = -KAPPA * jnp.eye(n, dtype=jnp.complex128)
-    A = A.at[n - 1, n - 1].add(-1j * theta)
-    for j in range(n - 1):
-        A = A.at[j + 1, j].add(J * jnp.exp(g))
-        A = A.at[j, j + 1].add(J * jnp.exp(-g))
-    B = -KAPPA * jnp.eye(n, dtype=jnp.complex128)
-    for j in range(n - 1):
-        B = B.at[j + 1, j].add(J * jnp.exp(-g))
-        B = B.at[j, j + 1].add(J * jnp.exp(g))
-    L = lam * jnp.exp(1j * phi) * jnp.eye(n, dtype=jnp.complex128)
-    return jnp.block([[A, L], [L.conj().T, B]])
-
-
-def realify(A):
-    """Embed a complex matrix into a real matrix of doubled dimension."""
-    return jnp.block([[A.real, -A.imag], [A.imag, A.real]])
-
-
-def solve_lyap(Ar):
-    """Solve the continuous-time Lyapunov equation for the covariance."""
-    m = Ar.shape[0]
-    Lop = jnp.kron(jnp.eye(m), Ar) + jnp.kron(Ar, jnp.eye(m))
-    return jnp.linalg.solve(Lop, -(2 * KAPPA * jnp.eye(m)).flatten()).reshape(m, m)
-
-
-def compute_all(x, N):
-    """Evaluate record Fisher information metrics for parameters x."""
-    p = unmap(x)
-    J, g, lam, phi = p
-    n = int(N)
-    A0 = make_drift(n, J, g, lam, phi, THETA0)
-    Ar0 = realify(A0)
-    max_re = jnp.max(jnp.linalg.eigvals(A0).real)
-    Sig = solve_lyap(Ar0)
-    nn = Ar0.shape[0]
-    u = jnp.zeros(nn).at[2 * (n - 1)].set(1.0)
-    mu = -jnp.linalg.solve(Ar0, u)
-    norm2 = jnp.sum(jnp.abs(mu) ** 2)
-    dAr = jnp.zeros((nn, nn))
-    idx = 2 * (n - 1)
-    dAr = dAr.at[idx, idx + 1].set(-1.0)
-    dAr = dAr.at[idx + 1, idx].set(1.0)
-    dmu = -jnp.linalg.solve(Ar0, dAr @ jnp.linalg.solve(Ar0, u))
-    Sig_inv = jnp.linalg.inv(Sig)
-    F_mean = dmu @ Sig_inv @ dmu
-    Lm = jnp.kron(jnp.eye(nn), Ar0) + jnp.kron(Ar0, jnp.eye(nn))
-    dSig = jnp.linalg.solve(Lm, -(dAr @ Sig + Sig @ dAr.T).flatten()).reshape(nn, nn)
-    X = Sig_inv @ dSig
-    F_cov = 0.5 * jnp.trace(X @ X)
-    F_C = F_mean + F_cov
-    F_norm = F_C / norm2
-    T = jnp.linalg.inv(-A0)
-    Sf = jnp.abs(T[n - 1, 0]) ** 2 + jnp.abs(T[n - 1 + n, 0]) ** 2
-    Sr = jnp.abs(T[0, n - 1]) ** 2 + jnp.abs(T[0 + n, n - 1]) ** 2
-    gf = 10.0 * jnp.log10(jnp.maximum(Sf, 1e-30))
-    gr = 10.0 * jnp.log10(jnp.maximum(Sr, 1e-30))
-    return F_C, norm2, F_norm, max_re, gf, gr, gf - gr
-
-
-def loss(x, N):
-    """Production loss: negative normalized FI plus stability barrier."""
-    _, _, F_norm, max_re, *_ = compute_all(x, N)
-    pen = jnp.maximum(max_re + 0.05, 0.0) * 1e8
-    return -F_norm + pen
 
 
 def adam_run(grad_fn, loss_fn, key):
@@ -195,12 +84,20 @@ def classify(F_norm, max_re):
 
 
 def self_check():
-    """Verify the model reproduces the published optima before any optimization."""
+    """Verify the model reproduces the published optima before any optimization.
+
+    F_C_norm/max_Re_lam come from the record-Fisher model; gains use the
+    reported scattering-matrix convention (doc_core.s_gains), matching
+    every published gain. The T-matrix transmission inside compute_all is
+    a diagnostic only.
+    """
     refs = json.load(open(REF_JSON))
     ok = True
     for r in refs:
         x = jnp.array(map_back([r["J"], r["g"], r["lam_inter"], r["phi"]]))
-        _, _, F_norm, max_re, gf, gr, iso = [float(v) for v in compute_all(x, r["N"])]
+        _, _, F_norm, max_re, *_ = [float(v) for v in compute_all(x, r["N"])]
+        gf, gr, iso = [float(v) for v in published_gains(
+            r["J"], r["g"], r["lam_inter"], r["phi"], r["N"])]
         checks = [
             ("F_C_norm", F_norm, r["F_C_norm"], 1e-3),
             ("max_Re_lam", max_re, r["max_Re_lam"], 1e-4),
@@ -262,6 +159,13 @@ def main():
             key = random.PRNGKey(BASE_SEED + 1000 * N + k)
             bx, _bf = adam_run(grad_fn, loss_fn, key)
             _, _, F_norm, max_re, gf, gr, iso = [float(v) for v in fisher_fn(bx)]
+            # NOTE convention split (frozen with the published analysis):
+            # per-seed gains stay in the T-matrix diagnostic convention
+            # because the published ensemble medians (marginal Gfwd
+            # +11.5 dB, IQR 7.7-19.7) and the tradeoff cloud were computed
+            # from it. Only the six optima rows use the reported S-matrix
+            # convention (see published_gains/self_check). Do not mix
+            # without updating the manuscript medians.
             p = unmap(bx)
             seeds.append({
                 "seed_index": k,

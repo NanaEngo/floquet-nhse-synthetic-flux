@@ -10,6 +10,11 @@ Reads the authoritative single-chain benchmark from
 per power-analysis practice). Runs a deterministic validation gate
 and aborts exit code 1 on any mismatch.
 
+Pipeline role: the even-N authority gate doubles as the single-chain
+baseline guard; validate_gain.py reuses gate_authority() read-only so
+this control is exercised by the gate hub, not only when regenerating
+the artifact.
+
 Run:
     mamba run -n qom python scripts/run_single_chain_doc.py
 """
@@ -30,6 +35,28 @@ def geometric_interpolate(lower_n, upper_n, lower_v, upper_v, n):
     """Log-log geometric interpolation between two points."""
     frac = (n - lower_n) / (upper_n - lower_n)
     return math.sqrt(lower_v * upper_v) ** (1 - frac) * (upper_v ** frac) / math.sqrt(lower_v ** (1 - frac) * upper_v ** frac)
+
+
+def gate_authority(res):
+    """Validate even-N authority rows against TARGETS (read-only).
+
+    Args:
+        res: Mapping N -> row from data/trackC_snr_decoupling.json with
+            F_C_normalized in rad^-2 per photon (dimensionless ratio).
+
+    Returns:
+        True if every even-N row matches within TOL, else False.
+    """
+    passed = True
+    for N in NSIZES_AUTHORITY:
+        got = res[N]["F_C_normalized"]
+        exp = TARGETS[N]
+        rel = abs(got - exp) / exp
+        status = "PASS" if rel <= TOL else "FAIL"
+        if status == "FAIL":
+            passed = False
+        print(f"  gate N={N:2d} Fnorm={got:.6e} target={exp:.6e} rel={rel:.2%} {status}")
+    return passed
 
 
 def main():
@@ -75,15 +102,7 @@ def main():
     json.dump(out_rows, open(OUT, "w"), indent=2)
 
     # Gate: validate authority points against TARGETS
-    passed = True
-    for N in NSIZES_AUTHORITY:
-        got = res[N]["F_C_normalized"]
-        exp = TARGETS[N]
-        rel = abs(got - exp) / exp
-        status = "PASS" if rel <= TOL else "FAIL"
-        if status == "FAIL":
-            passed = False
-        print(f"  gate N={N:2d} Fnorm={got:.6e} target={exp:.6e} rel={rel:.2%} {status}")
+    passed = gate_authority(res)
     print(f"\nproducer metadata: Adam(500 steps, lr=0.003), barrier=-0.05, seed=42, NMC=100")
     print(f"wrote {OUT} ({len(out_rows)} rows: even sizes authoritative, odd sizes interpolated)")
     if not passed:
