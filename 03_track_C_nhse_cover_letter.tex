@@ -1,0 +1,69 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=1.5cm]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{parskip}
+\usepackage{xcolor}
+\usepackage{siunitx}
+\usepackage[colorlinks=true, citecolor=blue, linkcolor=blue, urlcolor=blue]{hyperref}
+
+\sisetup{
+  retain-unity-mantissa = false,
+  exponent-product = \times
+}
+\DeclareSIUnit{\dB}{\deci\bel}
+\newcommand{\Fnorm}{F_C^{\mathrm{norm}}}
+\newcommand{\Fnormeff}{F_C^{\mathrm{norm,eff}}}
+\newcommand{\Gfwd}{G_{\mathrm{fwd}}}
+
+\definecolor{apsblue}{RGB}{0, 51, 102}
+
+\begin{document}
+
+\thispagestyle{empty}
+
+{\noindent\Large\bfseries\color{apsblue} PRX Quantum: Cover Letter}
+\vspace{2mm}
+\hrule height 1pt
+\vspace{4mm}
+
+\begin{small}
+\begin{raggedright}
+\textbf{Corresponding Author:} Dr.~P.~Djorw\'e\\
+Department of Physics, Faculty of Science, University of Ngaoundere, P.O. Box 454, Ngaoundere, Cameroon\\
+Stellenbosch Institute for Advanced Study (STIAS), Wallenberg Research Centre, Stellenbosch 7600, South Africa\\
+\textbf{Email:} \href{mailto:djorwepp@gmail.com}{djorwepp@gmail.com}
+\end{raggedright}
+\end{small}
+
+\vspace{3mm}
+\textbf{Date:} \today\\[1mm]
+\textbf{To:} The Editors, \textit{PRX Quantum}
+
+\vspace{3mm}
+\noindent\textbf{Subject:} Submission of Research Article: ``\textit{Spatial channel separation evades the single-port Petermann bound in a non-Hermitian optomechanical ladder}''
+
+\vspace{3mm}
+Dear Editors,
+
+We submit the enclosed manuscript for consideration as a Research Article in \textit{PRX Quantum}.
+
+\textbf{Context and contribution.}
+In single-port non-Hermitian sensors, the Petermann factor that accompanies boundary-mode accumulation cancels the susceptibility gain, imposing a strict resource bound on metrological precision. The central question we address is whether a multi-port architecture with opposing skin directions can evade this bound under full two-chain photon accounting, by separating where photons are consumed from where the signal is read out rather than by suppressing the underlying noise. We answer this in the affirmative. We study a double-chain ladder in which two optomechanical chains with opposing non-reciprocal hoppings spatially separate signal amplification from quantum-noise drainage. Gradient-based differentiable optimal control (DOC) maximizes the resource-normalized Fisher information $\Fnorm$ subject to a Hurwitz-stability constraint. Across system sizes $N\in\{\num{6},\num{8},\num{10},\num{12},\num{14},\num{16}\}$ the optimizer returns strictly positive $\Fnorm$ in every case, in two initialization-dependent solution classes that sit at opposite ends of a continuous precision--gain frontier controlled by the spectral margin: deep-stability configurations achieve $\Fnorm\in\numrange{0.937}{0.987}$ with strongly attenuated forward transmission and therefore require a quantum-limited preamplifier (after which the effective information remains $\approx\num{0.3}$--$\num{0.5}$), while marginal-stability configurations deliver directional gain $\Gfwd\in\qtyrange{13.5}{15.5}{\si{dB}}$ with isolation $\in\qtyrange{40}{64}{\si{dB}}$. Under \qty{5}{\percent} Gaussian disorder, multi-restart re-optimization recovers at least \qty{80}{\percent} of nominal sensitivity in 14 of 16 realizations (\qty{87.5}{\percent}), all remaining stable; an initialization-resampling study shows that the two classes coexist at every size. All directional gains reported use the scattering-matrix convention $S_{N,1}$ referenced to the physical read-out and injection ports.
+
+The architecture is mapped onto circuit-QED optomechanical parameters. Present-day single-photon couplings ($g_0/\omega_m \approx 1.8\times 10^{-4}$) remain a factor of $\sim\num{1.7e3}$ below the intermediate-coupling target ($g_1/\omega_m = 0.30$) assumed in the force and axion projections; those projections are therefore illustrative of architectural reach rather than near-term device performance. They are conditional projections, and the manuscript states the assumptions on which they depend.
+
+A non-technical Popular Summary of fewer than 250 words is supplied with the submission. An explicit Data Availability Statement appears in the manuscript; the manuscript sources, deterministic analysis scripts, and the environment specification are publicly archived at \url{https://github.com/NanaEngo/floquet-nhse-synthetic-flux}.
+
+The work shows that a recognized resource bound in non-Hermitian sensing can be bypassed by architecture and delimits two stable operating regimes. It addresses readers of \textit{PRX Quantum} in quantum sensing, open quantum systems, and quantum information.
+
+All authors have approved the manuscript. The work is original and not under consideration elsewhere. Thank you for your consideration.
+
+\vspace{5mm}
+\noindent Sincerely,\\[2mm]
+\textbf{Dr.~P.~Djorw\'e}\\
+\textit{On behalf of all co-authors}
+
+\end{document}

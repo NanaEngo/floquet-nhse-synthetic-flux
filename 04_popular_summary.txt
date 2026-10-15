@@ -1,0 +1,26 @@
+Popular Summary (<=250 words)
+Title: Two chains, one sensor: steering quantum noise away from the signal
+
+Quantum sensors promise measurements of forces and fields with exquisite
+sensitivity, but they face an uncomfortable truth: the very photons that
+carry the signal also carry noise. In one-dimensional arrays of coupled
+cavities, a curious effect called the non-Hermitian skin effect piles up
+light at the array's edge. This pile-up boosts the response to a weak
+signal, yet it amplifies quantum fluctuations just as strongly, so the
+precision gained is given straight back.
+
+We show how to break this deadlock with a simple architectural idea:
+build two parallel chains whose directional transport runs in opposite
+ways, and connect them weakly. The signal then grows along one chain
+while quantum noise drains away down the other. Because no photon is
+hidden from the accounting -- we count them in both chains -- the gain
+is honest. An automatic optimization routine tunes all the couplings and
+reveals two useful personalities: a "quiet" mode where each photon buys
+nearly perfect precision but little signal throughput, and an "amplifier"
+mode that boosts signals strongly in one direction while blocking the
+reverse one. Both personalities survive small fabrication imperfections
+when the design is re-tuned, and both are compatible with
+superconducting-circuit and phononic-crystal platforms.
+
+This turns a celebrated nuisance of non-Hermitian physics into a design
+resource for precision force and field sensing.
